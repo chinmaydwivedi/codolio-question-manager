@@ -483,6 +483,33 @@ export const useQuestionStore = create(
                 const topic = state.topics.byId[topicId];
                 if (!topic) return state;
 
+                const subTopicId = questionData.subTopicId;
+
+                // If subTopicId is provided, add to sub-topic instead of topic
+                if (subTopicId && state.subTopics.byId[subTopicId]) {
+                    const subTopic = state.subTopics.byId[subTopicId];
+                    return {
+                        questions: {
+                            byId: {
+                                ...state.questions.byId,
+                                [id]: { id, topicId, subTopicId, isSolved: false, ...questionData }
+                            },
+                            allIds: [...state.questions.allIds, id]
+                        },
+                        subTopics: {
+                            ...state.subTopics,
+                            byId: {
+                                ...state.subTopics.byId,
+                                [subTopicId]: {
+                                    ...subTopic,
+                                    questionIds: [...(subTopic.questionIds || []), id]
+                                }
+                            }
+                        }
+                    };
+                }
+
+                // Otherwise, add to topic directly
                 return {
                     questions: {
                         byId: {

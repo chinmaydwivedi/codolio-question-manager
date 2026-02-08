@@ -12,6 +12,7 @@ export default function TopicCard({ topic }) {
     const {
         ui,
         subTopics,
+        questions,
         toggleTopic,
         getTopicProgress,
         getQuestionsForTopic,
@@ -23,30 +24,69 @@ export default function TopicCard({ topic }) {
 
     const isExpanded = ui.expandedTopics.includes(topic.id);
     const progress = getTopicProgress(topic.id);
-    const questions = getQuestionsForTopic(topic.id);
-
-    // Track if topic is 100% completed
-    const isCompleted = progress.total > 0 && progress.solved === progress.total;
-    const prevCompletedRef = useRef(isCompleted);
-
-    // Trigger confetti when topic becomes completed
-    useEffect(() => {
-        if (isCompleted && !prevCompletedRef.current && progress.total > 0) {
-            // 🎉 Fire confetti celebration!
-            confetti({
-                particleCount: 100,
-                spread: 70,
-                origin: { y: 0.6 },
-                colors: ['#22c55e', '#4ade80', '#86efac', '#fbbf24', '#f59e0b']
-            });
-        }
-        prevCompletedRef.current = isCompleted;
-    }, [isCompleted, progress.total]);
+    const topicQuestions = getQuestionsForTopic(topic.id);
 
     // Get sub-topics for this topic
     const topicSubTopics = (topic.subTopicIds || [])
         .map(id => subTopics.byId[id])
         .filter(Boolean);
+
+    // Calculate total completion including sub-topic questions
+    const subTopicQuestionCount = topicSubTopics.reduce((acc, st) => {
+        const stQuestions = (st.questionIds || []).map(id => questions.byId[id]).filter(Boolean);
+        return {
+            total: acc.total + stQuestions.length,
+            solved: acc.solved + stQuestions.filter(q => q.isSolved).length
+        };
+    }, { total: 0, solved: 0 });
+
+    const totalQuestions = progress.total + subTopicQuestionCount.total;
+    const totalSolved = progress.solved + subTopicQuestionCount.solved;
+    const isCompleted = totalQuestions > 0 && totalSolved === totalQuestions;
+    const prevCompletedRef = useRef(isCompleted);
+
+    // Trigger confetti when topic becomes completed - PAGE-WIDE celebration!
+    useEffect(() => {
+        if (isCompleted && !prevCompletedRef.current && totalQuestions > 0) {
+            // Fire confetti from multiple positions across the page
+            const duration = 3000;
+            const end = Date.now() + duration;
+
+            const frame = () => {
+                // Left side burst
+                confetti({
+                    particleCount: 4,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0, y: 0.6 },
+                    colors: ['#22c55e', '#4ade80', '#86efac', '#fbbf24', '#f59e0b']
+                });
+                // Right side burst
+                confetti({
+                    particleCount: 4,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1, y: 0.6 },
+                    colors: ['#22c55e', '#4ade80', '#86efac', '#fbbf24', '#f59e0b']
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            };
+
+            // Initial big burst from center
+            confetti({
+                particleCount: 150,
+                spread: 100,
+                origin: { x: 0.5, y: 0.5 },
+                colors: ['#22c55e', '#4ade80', '#86efac', '#fbbf24', '#f59e0b', '#ffffff']
+            });
+
+            frame();
+        }
+        prevCompletedRef.current = isCompleted;
+    }, [isCompleted, totalQuestions]);
 
     const {
         attributes,
@@ -199,13 +239,13 @@ export default function TopicCard({ topic }) {
                         )}
 
                         {/* Questions directly under topic (not in sub-topic) */}
-                        {questions.length > 0 && (
+                        {topicQuestions.length > 0 && (
                             <SortableContext
-                                items={questions.map(q => q.id)}
+                                items={topicQuestions.map(q => q.id)}
                                 strategy={verticalListSortingStrategy}
                             >
                                 <div className="questions-list">
-                                    {questions.map((question) => (
+                                    {topicQuestions.map((question) => (
                                         <QuestionCard key={question.id} question={question} />
                                     ))}
                                 </div>
@@ -213,7 +253,7 @@ export default function TopicCard({ topic }) {
                         )}
 
                         {/* Empty state */}
-                        {questions.length === 0 && topicSubTopics.length === 0 && (
+                        {topicQuestions.length === 0 && topicSubTopics.length === 0 && (
                             <div className="empty-state" style={{ padding: '30px 20px' }}>
                                 <div className="empty-state-description">
                                     No questions yet. Click + to add questions or sub-topics.
