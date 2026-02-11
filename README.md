@@ -114,23 +114,16 @@ src/
 
 ---
 
-## API Integration
+## Data Source
 
-The application fetches data from the Codolio public API:
+The application is pre-populated with **Striver's A2Z DSA Sheet** containing **449 questions** across **18 topics**.
 
-```
-GET https://node.codolio.com/api/question-tracker/v1/sheet/public/get-sheet-by-slug/striver-sde-sheet
-```
+- Source Data: `sheet.json` (Local file)
+- Transformation: `scripts/generateSampleData.cjs` converts the raw JSON into the application's state format.
+- Initial State: `src/data/sampleData.js`
 
-The API response is normalized into an optimized data structure for efficient lookups and updates:
+While the application supports fetching from the Codolio API, it is currently configured to use this local dataset as the source of truth to ensure all 449 questions are available immediately without rate limiting or network issues.
 
-```javascript
-{
-  topics: { byId: {}, allIds: [] },
-  subTopics: { byId: {}, allIds: [] },
-  questions: { byId: {}, allIds: [] }
-}
-```
 
 ---
 

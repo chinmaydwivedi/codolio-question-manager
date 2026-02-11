@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useQuestionStore } from './store/questionStore';
@@ -21,13 +20,8 @@ function App() {
     clearError
   } = useQuestionStore();
 
-  // Fetch data from API on mount
-  useEffect(() => {
-    // Only fetch if we haven't already loaded from API
-    if (dataSource !== 'api') {
-      fetchFromApi();
-    }
-  }, []);
+  // Data is pre-loaded from sheet.json via sampleData
+  // API fetch can be triggered manually via the toolbar if needed
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
