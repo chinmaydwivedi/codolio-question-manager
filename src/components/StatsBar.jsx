@@ -1,7 +1,8 @@
 import { useQuestionStore } from '../store/questionStore';
 
 export default function StatsBar() {
-    const { getStats } = useQuestionStore();
+    const questions = useQuestionStore(state => state.questions);
+    const getStats = useQuestionStore(state => state.getStats);
     const stats = getStats();
 
     return (
